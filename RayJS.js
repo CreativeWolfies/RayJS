@@ -51,6 +51,8 @@ class RayDisplay {
             throw new Error("RayJS Display already initialized.");
         }
 
+        this.isInitialized = true;
+
         if (fullscrn) {
             this.canvas = document.createElement("canvas");
             document.body.appendChild(this.canvas);

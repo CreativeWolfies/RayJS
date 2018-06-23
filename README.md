@@ -13,7 +13,7 @@ Add the RayJS script to your webpage:
 </head>
 ```
 
-Once this is done, you can then implement the library. It contains one class, named `RayJS`.
+Once this is done, you can then implement the library. It contains one class, named `RayDisplay`.
 
 Let this be a small example script:
 
@@ -25,7 +25,7 @@ Let this be a small example script:
     <title>A small example script</title>
     <script src="https://creativewolfies.github.io/RayJS/RayJS.js"></script>
     <script>
-var scene = new RayJS();
+var scene = new RayDisplay();
 
 window.onload = function() {
   scene.init(true); // setting the first argument (fullscreen) to true will create a new element for us
@@ -38,7 +38,7 @@ function draw() {
   scene.clearCanvas();
   scene.setFillColor("#a3c4d9"); // kinda blue
   scene.usePenRect(10, 10, 100, 100);
-  scene.fill();
+  scene.fillPenPath();
 }
     </script>
   </head>
