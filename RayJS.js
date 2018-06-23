@@ -279,6 +279,21 @@ class RayDisplay {
         }
     }
 
+    usePenRect(x, y, width, height) {
+        if (
+            (typeof x === "number") &&
+            (typeof y === "number") &&
+            (typeof width === "number") &&
+            (typeof height === "number") &&
+            (width > 0) &&
+            (height > 0)
+        ) {
+            this.ctx.rect(x, y, width, height);
+        } else {
+            throw new Error("usePenRect() needs numbers (x, y, width, height)");
+        }
+    }
+
     stopPenMovement() {
         this.checkPen();
         this.penX = 0;
