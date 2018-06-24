@@ -392,16 +392,16 @@ class RayDisplay {
                 (gradientStyle === "linear") ||
                 (gradientStyle === "radial")
             ) &&
-            (colors instanceof Array)
+            (colors.every(el => el instanceof Array))
         ) {
             let grad;
             if (gradientStyle === "linear") {
                 grad = this.ctx.createLinearGradient(x, y, sndX, sndY);
             } else if (
                 (gradientStyle === "radial") &&
-                (r instanceof Array) &&
-                (typeof r[0] === "number") &&
-                (typeof r[1] === "number")
+                (r.every(el => el instanceof Array))
+                (r.every(el => typeof el[0] === "number")) &&
+                (r.every(el => typeof el[1] === "number")
             ) {
                 grad = this.ctx.createRadialGradient(x, y, r[0], sndX, sndY, r[1]);
             }
@@ -418,6 +418,64 @@ class RayDisplay {
             this.ctx[`${style}Style`] = grad;
         } else {
             throw new Error("createGradient() needs numbers (x, y, sndX, sndY, r (if you have selected a linear gradient, put a random value for this argument.)), strings (style (\"fill\", \"stroke\"), gradientStyle (\"linear\", \"radial\")) and an Array (colors) with a number (between 0 and 1) and a string of the color.");
+        }
+    }
+
+    drawFocus(element) {
+        this.checkInit();
+        if (
+            (element instanceof HTMLButtonElement) ||
+            (
+                (element instanceof HTMLInputElement) &&
+                (element.type === "button")
+            )
+        ) {
+            this.ctx.drawFocusIfNeeded(element);
+        } else {
+            throw new Error("drawFocus() needs an HTMLInputElement (with \"button\" as type) or an HTMLButtonElement.");
+        }
+    }
+
+    drawImage(image, sx = 0, sy = 0, sWidth = image.width, sHeight = image.height, dx = 0, dy = 0, dWidth = image.width, dHeight = image.height) {
+        if (
+            (image instanceof CanvasImageSource) &&
+            (typeof sx === "number") &&
+            (sx > 0) &&
+            (typeof sy === "number") &&
+            (sy > 0) &&
+            (typeof sWidth === "number") &&
+            (sWidth > 0) &&
+            (typeof sHeight === "number") &&
+            (sHeight > 0) &&
+            (typeof dx === "number") &&
+            (dx > 0) &&
+            (typeof dy === "number") &&
+            (dy > 0) &&
+            (typeof dWidth === "number") &&
+            (dWidth > 0) &&
+            (typeof dHeight === "number") &&
+            (dHeight > 0)
+        ) {
+            ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        } else {
+            throw new Error("drawImage() needs a CanvasImageSource (image) and numbers (sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight).");
+        }
+    }
+
+    setFilters(...filters) {
+        if (CanvasRenderingContext2D.prototype.hasOwnProperty("filter")) {
+            if (filters.every(fltr => ~fltr.search(/^(url\(.+\)|blur\(\d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax)\)|brightness\([0-100]%\)|contrast\([0-100]%\)|drop-shadow\(\d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax) \d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax) \d+ #([\da-aF-F]{3}|[\da-aF-F]{6})\)|grayscale\([0-100]%\)|hue-rotate\(\d+deg\)|invert\([0-100]%\)|opacity\([0-100]%\)|saturate\([0-100]%\)|sepia\([0-100]%\)|none)$/))) {
+                let fltrs = "";
+                filters.forEach(fltr => {
+                    fltrs += (fltr + " ");
+                });
+                this.ctx.filter = fltrs;
+            } else {
+                throw new Error("One of your filter doesn't exist or have an invalid unit.");
+            }
+        } else {
+            console.error("User's navigator cannot handle CanvasRenderingContext2D.filter property.");
+            return false;
         }
     }
 
