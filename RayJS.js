@@ -437,6 +437,7 @@ class RayDisplay {
     }
 
     drawImage(image, sx = 0, sy = 0, sWidth = image.width, sHeight = image.height, dx = 0, dy = 0, dWidth = image.width, dHeight = image.height) {
+        this.checkInit();
         if (
             (image instanceof CanvasImageSource) &&
             (typeof sx === "number") &&
@@ -463,6 +464,7 @@ class RayDisplay {
     }
 
     setFilters(...filters) {
+        this.checkInit();
         if (CanvasRenderingContext2D.prototype.hasOwnProperty("filter")) {
             if (filters.every(fltr => ~fltr.search(/^(url\(.+\)|blur\(\d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax)\)|brightness\([0-100]%\)|contrast\([0-100]%\)|drop-shadow\(\d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax) \d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax) \d+ #([\da-aF-F]{3}|[\da-aF-F]{6})\)|grayscale\([0-100]%\)|hue-rotate\(\d+deg\)|invert\([0-100]%\)|opacity\([0-100]%\)|saturate\([0-100]%\)|sepia\([0-100]%\)|none)$/))) {
                 let fltrs = "";
@@ -473,6 +475,16 @@ class RayDisplay {
             } else {
                 throw new Error("One of your filter doesn't exist or have an invalid unit.");
             }
+        } else {
+            console.error("User's navigator cannot handle CanvasRenderingContext2D.filter property.");
+            return false;
+        }
+    }
+
+    getFilters() {
+        this.checkInit();
+        if (CanvasRenderingContext2D.prototype.hasOwnProperty("filter")) {
+            return this.ctx.filter;
         } else {
             console.error("User's navigator cannot handle CanvasRenderingContext2D.filter property.");
             return false;
