@@ -12,6 +12,7 @@ class RayDisplay {
         this.bAutoResize = false;
         this.penX = 0;
         this.penY = 0;
+        this.filters = [];
         this.pathInitialized = false;
         Object.defineProperty(this, "autoResizeFn", {
             writable: false,
@@ -296,6 +297,28 @@ class RayDisplay {
         }
     }
 
+    usePenEllipse(x, y, rx, ry, rotation = 0, startAngle = 0, endAngle = 2 * Math.PI, anticlockwise = false) {
+        this.checkPen();
+        if (CanvasRenderingContext2D.prototype.hasOwnProperty("ellipse")) {
+            if (
+                (typeof x === "number") &&
+                (typeof y === "number") &&
+                (typeof rx === "number") &&
+                (typeof ry === "number") &&
+                (typeof rotation === "number") &&
+                (typeof startAngle === "number") &&
+                (typeof endAngle === "number") &&
+                (typeof anticlockwise === "boolean")
+            ) {
+                this.ctx.ellipse(x, y, rx, ry, rotation, startAngle, endAngle, anticlockwise);
+            } else {
+                throw new Error("usePenEllipse() needs numbers (x, y, rx, ry, rotation, startAngle, endAngle) and a boolean (anticlockwise)");
+            }
+        } else {
+            throw new Error("User's navigator cannot handle CanvasRenderingContext2D.ellipse() function.");
+        }
+    }
+
     stopPenMovement() {
         this.checkPen();
         this.penX = 0;
@@ -466,15 +489,12 @@ class RayDisplay {
     setFilters(...filters) {
         this.checkInit();
         if (CanvasRenderingContext2D.prototype.hasOwnProperty("filter")) {
-            if (filters.every(fltr => ~fltr.search(/^(url\(.+\)|blur\(\d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax)\)|brightness\([0-100]%\)|contrast\([0-100]%\)|drop-shadow\(\d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax) \d+(cm|mm|in|px|pt|pc|em|ex|ch|rem|vw|vh|vmin|vmax) \d+ #([\da-aF-F]{3}|[\da-aF-F]{6})\)|grayscale\([0-100]%\)|hue-rotate\(\d+deg\)|invert\([0-100]%\)|opacity\([0-100]%\)|saturate\([0-100]%\)|sepia\([0-100]%\)|none)$/))) {
-                let fltrs = "";
-                filters.forEach(fltr => {
-                    fltrs += (fltr + " ");
-                });
-                this.ctx.filter = fltrs;
-            } else {
-                throw new Error("One of your filter doesn't exist or have an invalid unit.");
-            }
+            let fltrs = "";
+            filters.forEach(el => {
+                fltrs += ` ${el}`;
+            });
+            this.ctx.filter = fltrs;
+            this.filters = filters;
         } else {
             console.error("User's navigator cannot handle CanvasRenderingContext2D.filter property.");
             return false;
@@ -484,7 +504,7 @@ class RayDisplay {
     getFilters() {
         this.checkInit();
         if (CanvasRenderingContext2D.prototype.hasOwnProperty("filter")) {
-            return this.ctx.filter;
+            return this.filters;
         } else {
             console.error("User's navigator cannot handle CanvasRenderingContext2D.filter property.");
             return false;
@@ -493,22 +513,162 @@ class RayDisplay {
 
     setFont(font) {
         this.checkInit();
-        if (typeof font !== "string") {
+        if (typeof font === "string") {
+            this.ctx.font = font;
+        } else {
             throw new Error("Argument must be a string");
         }
-        this.ctx.font = font;
+    }
+
+    setTextDirection(direction = "source-over") {
+        this.checkInit();
+        if (CanvasRenderingContext2D.prototype.hasOwnProperty("direction")) {
+            if (
+                (typeof direction === "string") &&
+                (
+                    (direction === "ltr") ||
+                    (direction === "rtl") ||
+                    (direction === "inherit")
+                )
+            ) {
+                this.ctx.direction = direction;
+            } else {
+                throw new Error("setTextDirection() needs a string that must be one of these values : \"ltr\", \"rtl\", \"inherit\".");
+            }
+        } else {
+            throw new Error("User's navigator cannot handle CanvasRenderingContext2D.direction property.");
+        }
+    }
+
+    setCompositeOperation(type) {
+        this.checkInit();
+        if (
+            (typeof type === "string") &&
+            (
+                (type === "source-over") ||
+                (type === "source-in") ||
+                (type === "source-out") ||
+                (type === "source-atop") ||
+                (type === "destination-over") ||
+                (type === "destination-in") ||
+                (type === "destination-out") ||
+                (type === "destination-atop") ||
+                (type === "lighter") ||
+                (type === "copy") ||
+                (type === "xor") ||
+                (type === "multiply") ||
+                (type === "screen") ||
+                (type === "overlay") ||
+                (type === "darken") ||
+                (type === "lighten") ||
+                (type === "color-dodge") ||
+                (type === "color-burn") ||
+                (type === "hard-light") ||
+                (type === "soft-light") ||
+                (type === "difference") ||
+                (type === "exclusion") ||
+                (type === "hue") ||
+                (type === "saturation") ||
+                (type === "color") ||
+                (type === "luminosity")
+            )
+        ) {
+            this.ctx.globalCompositeOperation = type;
+        } else {
+            throw new Error("setCompositeOperation needs no argument (reset) or a string (a valid globalCompositeOperation. https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation).");
+        }
+    }
+
+    writeText(text, x, y) {
+        this.checkInit();
+        if (
+            (typeof text === "string") &&
+            (typeof x === "number") &&
+            (typeof y === "number")
+        ) {
+            this.ctx.fillText(text, x, y);
+        } else {
+            throw new Error("writeText() needs a string (text) and numbers (x, y).");
+        }
     }
 
     setInterpolate(interpolate) {
         this.checkInit();
-        if (typeof interpolate !== "boolean") {
-            throw new Error("Argument must be a boolean");
+        if (
+            (CanvasRenderingContext2D.prototype.hasOwnProperty("imageSmoothingEnabled")) ||
+            (CanvasRenderingContext2D.prototype.hasOwnProperty("mozImageSmoothingEnabled")) ||
+            (CanvasRenderingContext2D.prototype.hasOwnProperty("webkitImageSmoothingEnabled")) ||
+            (CanvasRenderingContext2D.prototype.hasOwnProperty("msImageSmoothingEnabled"))
+        ) {
+            if (typeof interpolate !== "boolean") {
+                throw new Error("Argument must be a boolean");
+            } else {
+                this.ctx.mozImageSmoothingEnabled = interpolate;
+                this.ctx.webkitImageSmoothingEnabled = interpolate;
+                this.ctx.msImageSmoothingEnabled = interpolate;
+                this.ctx.imageSmoothingEnabled = interpolate;
+            }
+        } else {
+            console.error("User's navigator cannot handle CanvasRenderingContext2D.imageSmoothingEnabled property.")
+            return false;
         }
+    }
 
-        this.ctx.mozImageSmoothingEnabled = interpolate;
-        this.ctx.webkitImageSmoothingEnabled = interpolate;
-        this.ctx.msImageSmoothingEnabled = interpolate;
-        this.ctx.imageSmoothingEnabled = interpolate;
+    setLineDashOffset(v) {
+        this.checkInit();
+        if (typeof v === "number") {
+            this.ctx.lineDashOffset = v;
+        } else {
+            throw new Error("setLineDashOffset() needs a number (v).");
+        }
+    }
+
+    setLineJoin(join) {
+        if (
+            (typeof join === "string") &&
+            (
+                (join === "bevel") ||
+                (join === "round") ||
+                (join === "mitter")
+            )
+        ) {
+            this.ctx.lineJoin = join;
+        } else {
+            throw new Error("setLineJoin() needs a string that must be one of these values : \"bevel\", \"round\", \"mitter\".");
+        }
+    }
+
+    setLineWidth(w) {
+        if (typeof w === "number") {
+            this.ctx.lineWidth = w;
+        } else {
+            this.ctx.lineWidth = w;
+            console.error("setLineWidth() changes the width of lines only if the function has a valid number (w).");
+        }
+    }
+
+    createPattern(img, repetition = "repeat", style = "fill") {
+        this.checkInit();
+        if (
+            (img instanceof CanvasImageSource) &&
+            (typeof repetition === "string") &&
+            (
+                (repetition === "repeat") ||
+                (repetition === "repeat-x") ||
+                (repetition === "repeat-y") ||
+                (repetition === "no-repeat")
+            ) &&
+            (typeof style === "string") &&
+            (
+                (style === "fill") ||
+                (style === "stroke")
+            )
+        ) {
+            let pattern = this.ctx.createPattern(img, repetition);
+            this.ctx[style + "Style"] = pattern;
+        } else {
+            throw new Error("createPattern() needs a CanvasImageSource (img) and strings (repetition (\"repeat\", \"repeat-x\", \"repeat-y\" or \"no-repeat\". Default value : \"repeat\"), style (\"fill\" or \"stroke\". Default value : \"fill\")).");
+        }
     }
 
     setDrawingMethod(draw) {
